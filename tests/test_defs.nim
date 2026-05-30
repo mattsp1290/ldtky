@@ -7,6 +7,7 @@ import ldtky/defs/tileset
 import ldtky/defs/intgrid
 import ldtky/defs/entity
 import ldtky/defs/layer
+import ldtky/instances/world
 import ldtky/enums
 import ldtky/primitives
 import ldtky/errors
@@ -166,3 +167,32 @@ suite "parseDefinitions":
     }
     expect(LdtkParseError):
       discard parseDefinitions(n)
+
+suite "parseWorld":
+  test "parses world with worldLayout enum":
+    let n = %* {
+      "identifier": "Horizontal",
+      "iid": "abc-123",
+      "worldGridHeight": 256,
+      "worldGridWidth": 256,
+      "defaultLevelHeight": 256,
+      "defaultLevelWidth": 256,
+      "worldLayout": "LinearHorizontal",
+      "levels": []
+    }
+    let w = parseWorld(n)
+    check w.identifier == "Horizontal"
+    check w.worldLayout == some(WorldLayout.LinearHorizontal)
+    check w.levels.len == 0
+
+  test "null worldLayout yields none":
+    let n = newJObject()
+    n["identifier"] = newJString("W")
+    n["iid"] = newJString("x")
+    n["worldGridHeight"] = newJInt(0)
+    n["worldGridWidth"] = newJInt(0)
+    n["defaultLevelHeight"] = newJInt(256)
+    n["defaultLevelWidth"] = newJInt(256)
+    n["worldLayout"] = newJNull()
+    let w = parseWorld(n)
+    check w.worldLayout.isNone

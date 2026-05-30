@@ -3,6 +3,9 @@ nimblecache/
 htmldocs/
 tests/test_*
 !tests/test_*.nim
+examples/basic
+examples/entities
+examples/tileset
 
 # Beads / Dolt files (added by bd init)
 .dolt/

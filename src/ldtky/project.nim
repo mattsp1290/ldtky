@@ -50,6 +50,9 @@ type
     customCommands*: seq[CustomCommand]
 
 proc parseProject*(node: JsonNode): LdtkJsonRoot =
+  ## Parse a `.ldtk` root JSON object. Emits a stderr warning when `jsonVersion`
+  ## differs from `SupportedVersion`. Does not load external level files —
+  ## call `loadExternalLevels` or use `loadProject` instead.
   result.jsonVersion = getField[string](node, "jsonVersion")
   if result.jsonVersion != SupportedVersion:
     stderr.writeLine("ldtky warning: jsonVersion " & result.jsonVersion &

@@ -47,6 +47,8 @@ proc parseTile(node: JsonNode): Tile =
       result.d.add(v.getInt)
 
 proc parseLayerInstance*(node: JsonNode): LayerInstance =
+  ## Parse a layer instance JSON object. Returns a `LayerInstance` ref.
+  ## Handles all 4 layer kinds: IntGrid, Entities, Tiles, AutoLayer.
   result = LayerInstance()
   result.identifier       = getField[string](node, "__identifier")
   result.iid              = getField[string](node, "iid")

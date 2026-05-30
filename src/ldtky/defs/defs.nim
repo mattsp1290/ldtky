@@ -16,6 +16,7 @@ type
     tilesets*: seq[TilesetDef]
 
 proc parseDefinitions*(node: JsonNode): Definitions =
+  ## Parse the `defs` object of a `.ldtk` file into a `Definitions` value.
   if node.kind != JObject:
     raise newException(LdtkParseError, "Definitions: expected object, got " & $node.kind)
   if node.hasKey("entities") and node["entities"].kind == JArray:

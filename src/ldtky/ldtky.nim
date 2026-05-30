@@ -11,7 +11,6 @@ import ldtky/enums;             export enums
 import ldtky/primitives;        export primitives
 import ldtky/field_value;       export field_value
 import ldtky/json_helpers;      export json_helpers
-import ldtky/parse_utils;       export parse_utils
 import ldtky/defs;              export defs
 import ldtky/instances/layer_utils; export layer_utils
 import ldtky/instances/field;   export field

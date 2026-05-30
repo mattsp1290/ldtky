@@ -6,6 +6,12 @@ import ldtky/instances/layer
 import ldtky/instances/level
 import ldtky/errors
 
+proc readLdtkFile(path: string): JsonNode =
+  ## Read and parse a JSON file, wrapping all stdlib exceptions as LdtkParseError.
+  try: parseFile(path)
+  except CatchableError as e:
+    raise newException(LdtkParseError, "failed to read " & path & ": " & e.msg)
+
 proc loadExternalLevels*(project: var LdtkJsonRoot, projectDir: string) =
   ## Populate `layerInstances` for levels that have `externalRelPath` set.
   ## Only called when `project.externalLevels` is true.
@@ -22,7 +28,7 @@ proc loadExternalLevels*(project: var LdtkJsonRoot, projectDir: string) =
       if not fileExists(ldtklPath):
         raise newException(LdtkParseError,
           "external level file not found: " & ldtklPath)
-      let ldtklData = parseFile(ldtklPath)
+      let ldtklData = readLdtkFile(ldtklPath)
       # .ldtkl files contain a single Level JSON object
       lv.layerInstances = some(newSeq[LayerInstance]())
       if ldtklData.hasKey("layerInstances") and ldtklData["layerInstances"].kind == JArray:
@@ -39,9 +45,10 @@ proc loadProject*(path: string): LdtkJsonRoot =
   ## Load and parse a `.ldtk` project file.
   ## If `externalLevels` is true, automatically loads `.ldtkl` sidecar files
   ## from the same directory, populating `layerInstances` for all levels.
+  ## Raises `LdtkParseError` on missing file, malformed JSON, or parse failure.
   if not fileExists(path):
     raise newException(LdtkParseError, "project file not found: " & path)
-  let data = parseFile(path)
+  let data = readLdtkFile(path)
   result = parseProject(data)
   if result.externalLevels:
     loadExternalLevels(result, parentDir(path))

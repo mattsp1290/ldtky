@@ -18,6 +18,7 @@ task test, "Run unit tests":
     "tests/test_instances.nim",
     "tests/test_defs.nim",
     "tests/test_level_world.nim",
+    "tests/test_integration.nim",
   ]
   for f in testFiles:
     exec "nim c " & sharedFlags & " -r " & f
@@ -46,6 +47,8 @@ task checkModules, "Check library modules compile":
     "src/ldtky/defs.nim",
     "src/ldtky/instances/world.nim",
     "src/ldtky/project.nim",
+    "src/ldtky/loader.nim",
+    "src/ldtky/ldtky.nim",
   ]
   for m in modules:
     exec "nim check " & sharedFlags & " " & m

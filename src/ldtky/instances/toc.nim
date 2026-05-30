@@ -1,4 +1,5 @@
 import std/json
+import std/options
 import std/strutils
 import ldtky/enums
 import ldtky/field_value
@@ -10,8 +11,8 @@ type
     ## Per-instance data stored in a table-of-contents entry.
     worldX*, worldY*: int
     heiPx*, widPx*: int
-    iids*: EntityReferenceInfos
-    fields*: JsonNode    ## raw field data (varies by entity type)
+    iids*: Option[EntityReferenceInfos]  ## absent in some LDtk versions
+    fields*: Option[JsonNode]             ## raw field data; none when key absent
 
   TableOfContentEntry* = object
     ## Entry for one entity type in the project table of contents.
@@ -45,9 +46,9 @@ proc parseTocInstanceData(node: JsonNode): TocInstanceData =
   result.heiPx  = getField[int](node, "heiPx")
   result.widPx  = getField[int](node, "widPx")
   if node.hasKey("iids") and node["iids"].kind == JObject:
-    result.iids = parseEntityRefInfos(node["iids"])
-  if node.hasKey("fields"):
-    result.fields = node["fields"]
+    result.iids = some(parseEntityRefInfos(node["iids"]))
+  if node.hasKey("fields") and node["fields"].kind != JNull:
+    result.fields = some(node["fields"])
 
 proc parseTableOfContentEntry*(node: JsonNode): TableOfContentEntry =
   result.identifier = getField[string](node, "identifier")

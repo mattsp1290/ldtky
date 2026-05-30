@@ -3,6 +3,7 @@ import std/options
 import ldtky/primitives
 import ldtky/json_helpers
 import ldtky/errors
+import ldtky/parse_utils
 
 type
   EnumDefValues* = object
@@ -25,15 +26,6 @@ type
   EnumTagValue* = object
     enumValueId*: string
     tileIds*: seq[int]
-
-proc parseTilesetRect(node: JsonNode): TilesetRect =
-  if node.kind != JObject:
-    raise newException(LdtkParseError, "TilesetRect: expected object, got " & $node.kind)
-  result.h          = getField[int](node, "h")
-  result.w          = getField[int](node, "w")
-  result.x          = getField[int](node, "x")
-  result.y          = getField[int](node, "y")
-  result.tilesetUid = getField[int](node, "tilesetUid")
 
 proc parseEnumDefValues(node: JsonNode): EnumDefValues =
   result.color  = getField[int](node, "color")

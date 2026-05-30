@@ -2,9 +2,10 @@ import std/json
 import std/options
 import std/strutils
 import ldtky/enums
-import ldtky/field_value
+import ldtky/primitives
 import ldtky/json_helpers
 import ldtky/errors
+import ldtky/parse_utils
 
 type
   TocInstanceData* = object
@@ -25,19 +26,6 @@ type
     command*: string
     execWhen*: CustomCommandWhen
 
-proc parseEnumField[T: enum](s, ctx: string): T =
-  try: parseEnum[T](s)
-  except ValueError:
-    raise newException(LdtkParseError, ctx & ": unknown enum value: " & s)
-
-proc parseEntityRefInfos(node: JsonNode): EntityReferenceInfos =
-  if node.kind != JObject:
-    raise newException(LdtkParseError, "EntityReferenceInfos: expected object, got " & $node.kind)
-  result.entityIid = getField[string](node, "entityIid")
-  result.layerIid  = getField[string](node, "layerIid")
-  result.levelIid  = getField[string](node, "levelIid")
-  result.worldIid  = getField[string](node, "worldIid")
-
 proc parseTocInstanceData(node: JsonNode): TocInstanceData =
   if node.kind != JObject:
     raise newException(LdtkParseError, "TocInstanceData: expected object, got " & $node.kind)
@@ -46,7 +34,7 @@ proc parseTocInstanceData(node: JsonNode): TocInstanceData =
   result.heiPx  = getField[int](node, "heiPx")
   result.widPx  = getField[int](node, "widPx")
   if node.hasKey("iids") and node["iids"].kind == JObject:
-    result.iids = some(parseEntityRefInfos(node["iids"]))
+    result.iids = some(parseEntityReferenceInfos(node["iids"]))
   if node.hasKey("fields") and node["fields"].kind != JNull:
     result.fields = some(node["fields"])
 

@@ -3,12 +3,13 @@ import std/strutils
 import ldtky/primitives
 import ldtky/errors
 import ldtky/json_helpers
+# Selective import to avoid conflict with local requireInt/requireStr/requireBool helpers
+# (which take node+ctx for type-checking vs parse_utils' node+key for lookup)
+from ldtky/parse_utils import parseTilesetRect, parseEntityReferenceInfos
+# Re-export so code that imports field_value still sees EntityReferenceInfos
+export EntityReferenceInfos
 
 type
-  EntityReferenceInfos* = object
-    ## Cross-reference to an entity instance identified by IID strings.
-    entityIid*, layerIid*, levelIid*, worldIid*: string
-
   FieldKind* = enum
     fkInt, fkFloat, fkBool, fkString, fkColor, fkPoint, fkTile,
     fkEntityRef, fkEnum,
@@ -59,23 +60,6 @@ proc parseGridPoint(node: JsonNode): GridPoint =
     raise newException(LdtkParseError, "Point value: expected object, got " & $node.kind)
   result.cx = getField[int](node, "cx")
   result.cy = getField[int](node, "cy")
-
-proc parseTilesetRect(node: JsonNode): TilesetRect =
-  if node.kind != JObject:
-    raise newException(LdtkParseError, "Tile value: expected object, got " & $node.kind)
-  result.h = getField[int](node, "h")
-  result.w = getField[int](node, "w")
-  result.x = getField[int](node, "x")
-  result.y = getField[int](node, "y")
-  result.tilesetUid = getField[int](node, "tilesetUid")
-
-proc parseEntityRef(node: JsonNode): EntityReferenceInfos =
-  if node.kind != JObject:
-    raise newException(LdtkParseError, "EntityRef value: expected object, got " & $node.kind)
-  result.entityIid = getField[string](node, "entityIid")
-  result.layerIid  = getField[string](node, "layerIid")
-  result.levelIid  = getField[string](node, "levelIid")
-  result.worldIid  = getField[string](node, "worldIid")
 
 proc jsonToFloat(node: JsonNode): float =
   # LDtk emits integer JSON for float fields (e.g. `"a": 1` not `"a": 1.0`)
@@ -129,7 +113,7 @@ proc parseFieldValue*(node: JsonNode, fieldType: string): FieldValue =
     elif elemType == "EntityRef":
       result = FieldValue(kind: fkEntityRefArray)
       for item in node:
-        result.entityRefArr.add(parseEntityRef(item))
+        result.entityRefArr.add(parseEntityReferenceInfos(item))
     elif elemType.startsWith("LocalEnum.") or elemType.startsWith("ExternEnum."):
       result = FieldValue(kind: fkEnumArray)
       for item in node:
@@ -159,7 +143,7 @@ proc parseFieldValue*(node: JsonNode, fieldType: string): FieldValue =
   of "Tile":
     result = FieldValue(kind: fkTile, tileVal: parseTilesetRect(node))
   of "EntityRef":
-    result = FieldValue(kind: fkEntityRef, entityRefVal: parseEntityRef(node))
+    result = FieldValue(kind: fkEntityRef, entityRefVal: parseEntityReferenceInfos(node))
   else:
     # LocalEnum.Foo or ExternEnum.Foo
     if fieldType.startsWith("LocalEnum.") or fieldType.startsWith("ExternEnum."):

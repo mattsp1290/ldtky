@@ -51,9 +51,9 @@ type
 
 proc parseProject*(node: JsonNode): LdtkJsonRoot =
   result.jsonVersion = getField[string](node, "jsonVersion")
-  if not result.jsonVersion.startsWith(SupportedVersion):
+  if result.jsonVersion != SupportedVersion:
     stderr.writeLine("ldtky warning: jsonVersion " & result.jsonVersion &
-      " differs from supported " & SupportedVersion & " — parsing continues")
+      " != supported " & SupportedVersion & " — parsing continues")
   result.iid              = getOpt[string](node, "iid").get("")
   result.appBuildId       = getOpt[float](node, "appBuildId").get(0.0)
   result.nextUid          = getField[int](node, "nextUid")
@@ -91,6 +91,8 @@ proc parseProject*(node: JsonNode): LdtkJsonRoot =
     for f in node["flags"]:
       if f.kind == JString:
         result.flags.add(f.getStr)
+  if not node.hasKey("defs"):
+    raise newException(LdtkParseError, "LdtkJsonRoot: missing required 'defs' field")
   result.defs = parseDefinitions(node["defs"])
   if node.hasKey("levels") and node["levels"].kind == JArray:
     for lv in node["levels"]:

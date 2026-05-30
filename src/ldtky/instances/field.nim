@@ -16,8 +16,8 @@ type
     tile*: Option[TilesetRect]   ## from __tile (opt)
 
 proc parseFieldInstance*(node: JsonNode): FieldInstance =
-  result.identifier = requireStr(node, "__identifier")
-  result.fieldType  = requireStr(node, "__type")
+  result.identifier = getField[string](node, "__identifier")
+  result.fieldType  = getField[string](node, "__type")
   result.defUid     = getField[int](node, "defUid")
   if node.hasKey("__value") and node["__value"].kind != JNull:
     result.value = some(parseFieldValue(node["__value"], result.fieldType))

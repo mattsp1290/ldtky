@@ -3,9 +3,11 @@ import std/strutils
 import ldtky/primitives
 import ldtky/errors
 import ldtky/json_helpers
-# Selective import to avoid conflict with local requireInt/requireStr helpers
-# (which take node+ctx for type-checking a current node vs parse_utils' node+key for lookup)
+# Selective import to avoid conflict with local requireInt/requireStr/requireBool helpers
+# (which take node+ctx for type-checking vs parse_utils' node+key for lookup)
 from ldtky/parse_utils import parseTilesetRect, parseEntityReferenceInfos
+# Re-export so code that imports field_value still sees EntityReferenceInfos
+export EntityReferenceInfos
 
 type
   FieldKind* = enum

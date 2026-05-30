@@ -4,7 +4,6 @@ import ldtky/primitives
 import ldtky/defs/enums
 import ldtky/json_helpers
 import ldtky/errors
-import ldtky/parse_utils
 
 type
   TilesetDef* = object
@@ -30,9 +29,8 @@ proc parseCustomData(node: JsonNode): TileCustomMetadata =
 proc parseTilesetDef*(node: JsonNode): TilesetDef =
   result.identifier    = getField[string](node, "identifier")
   result.uid           = getField[int](node, "uid")
-  # __cHei and __cWid require manual access (double-underscore keys)
-  result.cHei          = requireInt(node, "__cHei")
-  result.cWid          = requireInt(node, "__cWid")
+  result.cHei          = getField[int](node, "__cHei")
+  result.cWid          = getField[int](node, "__cWid")
   result.pxHei         = getField[int](node, "pxHei")
   result.pxWid         = getField[int](node, "pxWid")
   result.tileGridSize  = getField[int](node, "tileGridSize")

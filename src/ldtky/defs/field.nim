@@ -45,7 +45,7 @@ type
 proc parseFieldDef*(node: JsonNode): FieldDef =
   result.identifier          = getField[string](node, "identifier")
   result.uid                 = getField[int](node, "uid")
-  result.fieldDefType        = requireStr(node, "__type")
+  result.fieldDefType        = getField[string](node, "__type")
   result.internalType        = getField[string](node, "type")
   result.isArray             = getField[bool](node, "isArray")
   result.canBeNull           = getField[bool](node, "canBeNull")

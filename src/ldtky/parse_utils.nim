@@ -30,23 +30,3 @@ proc parseEntityReferenceInfos*(node: JsonNode): EntityReferenceInfos =
   result.layerIid  = getField[string](node, "layerIid")
   result.levelIid  = getField[string](node, "levelIid")
   result.worldIid  = getField[string](node, "worldIid")
-
-proc requireStr*(node: JsonNode, key: string): string =
-  ## Extract a required string field, including `__`-prefixed keys.
-  ## Raises `LdtkParseError` on missing key or wrong JSON type.
-  if not node.hasKey(key):
-    raise newException(LdtkParseError, "missing required field: " & key)
-  let v = node[key]
-  if v.kind != JString:
-    raise newException(LdtkParseError, "field " & key & ": expected string, got " & $v.kind)
-  v.getStr
-
-proc requireInt*(node: JsonNode, key: string): int =
-  ## Extract a required int field, including `__`-prefixed keys.
-  ## Raises `LdtkParseError` on missing key or wrong JSON type.
-  if not node.hasKey(key):
-    raise newException(LdtkParseError, "missing required field: " & key)
-  let v = node[key]
-  if v.kind != JInt:
-    raise newException(LdtkParseError, "field " & key & ": expected int, got " & $v.kind)
-  v.getInt

@@ -31,6 +31,7 @@ type
     arrayMinLength*, arrayMaxLength*: Option[int]
     doc*: Option[string]
     regex*: Option[string]
+    acceptFileTypes*: Option[JsonNode]
     defaultOverride*: Option[JsonNode]
     textLanguageMode*: Option[TextLanguageMode]
     editorDisplayMode*: EditorDisplayMode
@@ -40,11 +41,23 @@ type
     exportToToc*: Option[bool]
     searchable*: Option[bool]
 
+proc requireDoubleUnderscoreStr(node: JsonNode, key: string): string =
+  if not node.hasKey(key):
+    raise newException(LdtkParseError, "missing required field: " & key)
+  let v = node[key]
+  if v.kind != JString:
+    raise newException(LdtkParseError, "field " & key & ": expected string, got " & $v.kind)
+  v.getStr
+
+proc parseEnumField[T: enum](s, ctx: string): T =
+  try: parseEnum[T](s)
+  except ValueError:
+    raise newException(LdtkParseError, ctx & ": unknown enum value: " & s)
+
 proc parseFieldDef*(node: JsonNode): FieldDef =
   result.identifier          = getField[string](node, "identifier")
   result.uid                 = getField[int](node, "uid")
-  # __type requires manual access (double-underscore key)
-  result.fieldDefType = node["__type"].getStr
+  result.fieldDefType        = requireDoubleUnderscoreStr(node, "__type")
   result.internalType        = getField[string](node, "type")
   result.isArray             = getField[bool](node, "isArray")
   result.canBeNull           = getField[bool](node, "canBeNull")
@@ -67,15 +80,22 @@ proc parseFieldDef*(node: JsonNode): FieldDef =
   result.editorTextPrefix    = getOpt[string](node, "editorTextPrefix")
   result.exportToToc         = getOpt[bool](node, "exportToToc")
   result.searchable          = getOpt[bool](node, "searchable")
+  if node.hasKey("acceptFileTypes") and node["acceptFileTypes"].kind != JNull:
+    result.acceptFileTypes = some(node["acceptFileTypes"])
   if node.hasKey("defaultOverride") and node["defaultOverride"].kind != JNull:
     result.defaultOverride = some(node["defaultOverride"])
-  result.allowedRefs = parseEnum[AllowedRefs](getField[string](node, "allowedRefs"))
-  result.editorDisplayMode = parseEnum[EditorDisplayMode](getField[string](node, "editorDisplayMode"))
-  result.editorDisplayPos  = parseEnum[EditorDisplayPos](getField[string](node, "editorDisplayPos"))
-  result.editorLinkStyle   = parseEnum[EditorLinkStyle](getField[string](node, "editorLinkStyle"))
+  result.allowedRefs = parseEnumField[AllowedRefs](
+    getField[string](node, "allowedRefs"), "FieldDef.allowedRefs")
+  result.editorDisplayMode = parseEnumField[EditorDisplayMode](
+    getField[string](node, "editorDisplayMode"), "FieldDef.editorDisplayMode")
+  result.editorDisplayPos = parseEnumField[EditorDisplayPos](
+    getField[string](node, "editorDisplayPos"), "FieldDef.editorDisplayPos")
+  result.editorLinkStyle = parseEnumField[EditorLinkStyle](
+    getField[string](node, "editorLinkStyle"), "FieldDef.editorLinkStyle")
   let tlmStr = getOpt[string](node, "textLanguageMode")
   if tlmStr.isSome:
-    result.textLanguageMode = some(parseEnum[TextLanguageMode](tlmStr.get))
+    result.textLanguageMode = some(
+      parseEnumField[TextLanguageMode](tlmStr.get, "FieldDef.textLanguageMode"))
   if node.hasKey("allowedRefTags") and node["allowedRefTags"].kind == JArray:
     for tag in node["allowedRefTags"]:
       if tag.kind != JString:

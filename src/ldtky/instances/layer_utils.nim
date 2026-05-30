@@ -1,3 +1,5 @@
+import ldtky/errors
+
 proc flipX*(f: int): bool =
   ## True when the tile's X-flip bit is set (bit 0 of the `f` field).
   (f and 1) != 0
@@ -13,6 +15,10 @@ proc tileCoordId*(x, y, cWid: int): int =
 proc decodeIntGridCsv*(csv: seq[int], cWid, cHei: int): seq[seq[int]] =
   ## Map a flat intGridCsv array to a 2D grid[row][col].
   ## `cWid` and `cHei` are the layer cell dimensions (from `__cWid` / `__cHei`).
+  let expected = cWid * cHei
+  if csv.len != expected:
+    raise newException(LdtkParseError,
+      "intGridCsv length " & $csv.len & " != cWid*cHei (" & $cWid & "*" & $cHei & "=" & $expected & ")")
   result = newSeq[seq[int]](cHei)
   for row in 0 ..< cHei:
     result[row] = newSeq[int](cWid)

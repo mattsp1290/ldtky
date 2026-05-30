@@ -2,6 +2,7 @@ import std/json
 import std/options
 import ldtky/primitives
 import ldtky/json_helpers
+import ldtky/errors
 
 type
   EnumDefValues* = object
@@ -26,6 +27,8 @@ type
     tileIds*: seq[int]
 
 proc parseTilesetRect(node: JsonNode): TilesetRect =
+  if node.kind != JObject:
+    raise newException(LdtkParseError, "TilesetRect: expected object, got " & $node.kind)
   result.h          = getField[int](node, "h")
   result.w          = getField[int](node, "w")
   result.x          = getField[int](node, "x")
@@ -42,12 +45,13 @@ proc parseEnumDefValues(node: JsonNode): EnumDefValues =
 proc parseEnumDef*(node: JsonNode): EnumDef =
   result.identifier           = getField[string](node, "identifier")
   result.uid                  = getField[int](node, "uid")
-  result.tags                 = @[]
   result.externalFileChecksum = getOpt[string](node, "externalFileChecksum")
   result.externalRelPath      = getOpt[string](node, "externalRelPath")
   result.iconTilesetUid       = getOpt[int](node, "iconTilesetUid")
   if node.hasKey("tags") and node["tags"].kind == JArray:
     for tag in node["tags"]:
+      if tag.kind != JString:
+        raise newException(LdtkParseError, "EnumDef.tags: expected string element, got " & $tag.kind)
       result.tags.add(tag.getStr)
   if node.hasKey("values") and node["values"].kind == JArray:
     for v in node["values"]:
@@ -57,4 +61,6 @@ proc parseEnumTagValue*(node: JsonNode): EnumTagValue =
   result.enumValueId = getField[string](node, "enumValueId")
   if node.hasKey("tileIds") and node["tileIds"].kind == JArray:
     for id in node["tileIds"]:
+      if id.kind != JInt:
+        raise newException(LdtkParseError, "EnumTagValue.tileIds: expected int element, got " & $id.kind)
       result.tileIds.add(id.getInt)

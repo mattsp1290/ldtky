@@ -15,6 +15,7 @@ task test, "Run unit tests":
     "tests/test_json_helpers.nim",
     "tests/test_field_value.nim",
     "tests/test_primitives.nim",
+    "tests/test_instances.nim",
   ]
   for f in testFiles:
     exec "nim c " & sharedFlags & " -r " & f
@@ -38,6 +39,9 @@ task checkModules, "Check library modules compile":
     "src/ldtky/instances/entity.nim",
     "src/ldtky/defs/layer.nim",
     "src/ldtky/instances/layer.nim",
+    "src/ldtky/instances/level.nim",
+    "src/ldtky/defs/defs.nim",
+    "src/ldtky/defs.nim",
   ]
   for m in modules:
     exec "nim check " & sharedFlags & " " & m

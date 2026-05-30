@@ -51,7 +51,7 @@ suite "parseFieldValue — scalar types":
     let v = parseFieldValue(%* {"h": 16, "w": 16, "x": 0, "y": 32, "tilesetUid": 5}, "Tile")
     check v.kind == fkTile
     check v.tileVal.h == 16
-    check v.tileVal.tilesetUid == 5
+    check v.tileVal.tilesetUid == some(5)
 
   test "EntityRef: parses reference object":
     let v = parseFieldValue(

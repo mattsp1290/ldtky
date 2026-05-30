@@ -1,3 +1,5 @@
+import std/options
+
 type
   EntityReferenceInfos* = object
     ## Cross-reference to an entity instance identified by IID strings.
@@ -8,9 +10,9 @@ type
 
   TilesetRect* = object
     ## A rectangular region within a tileset image.
-    h*, w*: int        ## Height and width in pixels
-    x*, y*: int        ## Top-left corner in the tileset image (pixels)
-    tilesetUid*: int   ## UID of the owning tileset definition
+    h*, w*: int               ## Height and width in pixels
+    x*, y*: int               ## Top-left corner in the tileset image (pixels)
+    tilesetUid*: Option[int]  ## UID of the owning tileset; null means no tileset assigned
 
   TileCustomMetadata* = object
     ## Per-tile custom metadata attached to a tileset tile.

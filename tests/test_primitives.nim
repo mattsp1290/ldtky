@@ -1,4 +1,5 @@
 import unittest
+import std/options
 import ldtky/primitives
 import ldtky/enums
 import ldtky/instances/layer_utils
@@ -12,10 +13,10 @@ suite "GridPoint":
 
 suite "TilesetRect":
   test "construction and field access":
-    let r = TilesetRect(h: 16, w: 16, x: 32, y: 64, tilesetUid: 5)
+    let r = TilesetRect(h: 16, w: 16, x: 32, y: 64, tilesetUid: some(5))
     check r.h == 16
     check r.w == 16
-    check r.tilesetUid == 5
+    check r.tilesetUid == some(5)
 
 suite "flipX / flipY":
   test "flipX(0) = false":

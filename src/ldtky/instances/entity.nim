@@ -34,28 +34,28 @@ proc parseEntityInstance*(node: JsonNode): EntityInstance =
   result.worldY      = getOpt[int](node, "__worldY")
   if node.hasKey("__tile") and node["__tile"].kind == JObject:
     result.tile = some(parseTilesetRect(node["__tile"]))
-  if node.hasKey("__grid") and node["__grid"].kind == JArray:
-    for v in node["__grid"]:
-      if v.kind != JInt:
-        raise newException(LdtkParseError, "EntityInstance.__grid: expected int, got " & $v.kind)
-      result.grid.add(v.getInt)
-  if node.hasKey("__pivot") and node["__pivot"].kind == JArray:
-    for v in node["__pivot"]:
-      case v.kind
-      of JFloat: result.pivot.add(v.getFloat)
-      of JInt:   result.pivot.add(v.getInt.float)
-      else:
-        raise newException(LdtkParseError, "EntityInstance.__pivot: expected float, got " & $v.kind)
-  if node.hasKey("px") and node["px"].kind == JArray:
-    for v in node["px"]:
-      if v.kind != JInt:
-        raise newException(LdtkParseError, "EntityInstance.px: expected int, got " & $v.kind)
-      result.px.add(v.getInt)
-  if node.hasKey("__tags") and node["__tags"].kind == JArray:
-    for tag in node["__tags"]:
-      if tag.kind != JString:
-        raise newException(LdtkParseError, "EntityInstance.__tags: expected string, got " & $tag.kind)
-      result.tags.add(tag.getStr)
-  if node.hasKey("fieldInstances") and node["fieldInstances"].kind == JArray:
-    for fi in node["fieldInstances"]:
-      result.fieldInstances.add(parseFieldInstance(fi))
+  for key in ["__grid", "__pivot", "px", "__tags", "fieldInstances"]:
+    if not node.hasKey(key):
+      raise newException(LdtkParseError, "EntityInstance: missing required array field: " & key)
+    if node[key].kind != JArray:
+      raise newException(LdtkParseError, "EntityInstance." & key & ": expected array, got " & $node[key].kind)
+  for v in node["__grid"]:
+    if v.kind != JInt:
+      raise newException(LdtkParseError, "EntityInstance.__grid: expected int, got " & $v.kind)
+    result.grid.add(v.getInt)
+  for v in node["__pivot"]:
+    case v.kind
+    of JFloat: result.pivot.add(v.getFloat)
+    of JInt:   result.pivot.add(v.getInt.float)
+    else:
+      raise newException(LdtkParseError, "EntityInstance.__pivot: expected float/int, got " & $v.kind)
+  for v in node["px"]:
+    if v.kind != JInt:
+      raise newException(LdtkParseError, "EntityInstance.px: expected int, got " & $v.kind)
+    result.px.add(v.getInt)
+  for tag in node["__tags"]:
+    if tag.kind != JString:
+      raise newException(LdtkParseError, "EntityInstance.__tags: expected string, got " & $tag.kind)
+    result.tags.add(tag.getStr)
+  for fi in node["fieldInstances"]:
+    result.fieldInstances.add(parseFieldInstance(fi))

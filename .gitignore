@@ -1,6 +1,8 @@
 nimcache/
 nimblecache/
 htmldocs/
+tests/test_*
+!tests/test_*.nim
 
 # Beads / Dolt files (added by bd init)
 .dolt/

@@ -8,17 +8,19 @@ skipDirs      = @["tests", "examples", "docs"]
 
 requires "nim >= 2.0.0"
 
-task test, "Run unit tests":
-  let flags = "--mm:orc --hints:off"
-  let testFiles: seq[string] = @[]
-  for f in testFiles:
-    exec "nim c " & flags & " -r " & f
+const sharedFlags = "--hints:off"  # --mm:orc comes from nim.cfg
 
-task check, "Check library modules compile":
-  let flags = "--mm:orc --hints:off"
+task test, "Run unit tests":
+  let testFiles: seq[string] = @[]
+  if testFiles.len == 0:
+    echo "warning: no test files registered yet"
+  for f in testFiles:
+    exec "nim c " & sharedFlags & " -r " & f
+
+task checkModules, "Check library modules compile":
   let modules = @[
     "src/ldtky/errors.nim",
     "src/ldtky/enums.nim",
   ]
   for m in modules:
-    exec "nim check " & flags & " " & m
+    exec "nim check " & sharedFlags & " " & m

@@ -1,3 +1,7 @@
+## LDtk string-enum types (schema v1.5.3).
+## Identifier spelling MUST match the JSON string values verbatim — these are
+## parsed via parseEnum. Do not normalize casing (e.g. LangJS, not LangJs).
+## Schema: https://ldtk.io/files/JSON_SCHEMA.json
 type
   LayerKind* {.pure.} = enum
     IntGrid

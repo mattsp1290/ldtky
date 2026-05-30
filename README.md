@@ -29,9 +29,14 @@ import ldtky/ldtky
 
 let project = loadProject("my_game/world.ldtk")
 
-echo "Loaded ", project.levels.len, " levels"
+# Collect all levels (handles both single-world and multi-world layouts)
+var levels: seq[Level]
+if project.worlds.len > 0:
+  for w in project.worlds: levels.add(w.levels)
+else:
+  levels = project.levels
 
-for level in project.levels:
+for level in levels:
   echo "Level: ", level.identifier, " (", level.pxWid, "x", level.pxHei, "px)"
   if level.layerInstances.isSome:
     for layer in level.layerInstances.get:
@@ -57,7 +62,8 @@ else:
 ## Entity Instances
 
 ```nim
-for level in project.levels:
+# levels = collected as in Quick Start above
+for level in levels:
   if level.layerInstances.isNone: continue
   for layer in level.layerInstances.get:
     for entity in layer.entityInstances:

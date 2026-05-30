@@ -23,6 +23,7 @@ task checkModules, "Check library modules compile":
     "src/ldtky/enums.nim",
     "src/ldtky/primitives.nim",
     "src/ldtky/json_helpers.nim",
+    "src/ldtky/field_value.nim",
   ]
   for m in modules:
     exec "nim check " & sharedFlags & " " & m

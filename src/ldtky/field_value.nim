@@ -2,6 +2,7 @@ import std/json
 import std/strutils
 import ldtky/primitives
 import ldtky/errors
+import ldtky/json_helpers
 
 type
   EntityReferenceInfos* = object
@@ -17,6 +18,7 @@ type
   FieldValue* = object
     ## A parsed LDtk field value. The `kind` discriminant selects the active branch.
     ## Color values are hex strings ("#rrggbb"). Enum values carry the identifier string.
+    ## FilePath fields are stored as fkString (no separate kind).
     case kind*: FieldKind
     of fkInt:       intVal*: int
     of fkFloat:     floatVal*: float
@@ -37,30 +39,45 @@ type
     of fkEntityRefArray: entityRefArr*: seq[EntityReferenceInfos]
     of fkEnumArray:      enumArr*: seq[string]
 
+proc requireInt(node: JsonNode, ctx: string): int =
+  if node.kind != JInt:
+    raise newException(LdtkParseError, ctx & ": expected int, got " & $node.kind)
+  node.getInt
+
+proc requireStr(node: JsonNode, ctx: string): string =
+  if node.kind != JString:
+    raise newException(LdtkParseError, ctx & ": expected string, got " & $node.kind)
+  node.getStr
+
+proc requireBool(node: JsonNode, ctx: string): bool =
+  if node.kind != JBool:
+    raise newException(LdtkParseError, ctx & ": expected bool, got " & $node.kind)
+  node.getBool
+
 proc parseGridPoint(node: JsonNode): GridPoint =
   if node.kind != JObject:
     raise newException(LdtkParseError, "Point value: expected object, got " & $node.kind)
-  result.cx = node["cx"].getInt
-  result.cy = node["cy"].getInt
+  result.cx = getField[int](node, "cx")
+  result.cy = getField[int](node, "cy")
 
 proc parseTilesetRect(node: JsonNode): TilesetRect =
   if node.kind != JObject:
     raise newException(LdtkParseError, "Tile value: expected object, got " & $node.kind)
-  result.h = node["h"].getInt
-  result.w = node["w"].getInt
-  result.x = node["x"].getInt
-  result.y = node["y"].getInt
-  result.tilesetUid = node["tilesetUid"].getInt
+  result.h = getField[int](node, "h")
+  result.w = getField[int](node, "w")
+  result.x = getField[int](node, "x")
+  result.y = getField[int](node, "y")
+  result.tilesetUid = getField[int](node, "tilesetUid")
 
 proc parseEntityRef(node: JsonNode): EntityReferenceInfos =
   if node.kind != JObject:
     raise newException(LdtkParseError, "EntityRef value: expected object, got " & $node.kind)
-  result.entityIid = node["entityIid"].getStr
-  result.layerIid  = node["layerIid"].getStr
-  result.levelIid  = node["levelIid"].getStr
-  result.worldIid  = node["worldIid"].getStr
+  result.entityIid = getField[string](node, "entityIid")
+  result.layerIid  = getField[string](node, "layerIid")
+  result.levelIid  = getField[string](node, "levelIid")
+  result.worldIid  = getField[string](node, "worldIid")
 
-proc parseFloat(node: JsonNode): float =
+proc jsonToFloat(node: JsonNode): float =
   # LDtk emits integer JSON for float fields (e.g. `"a": 1` not `"a": 1.0`)
   case node.kind
   of JFloat: node.getFloat
@@ -84,23 +101,23 @@ proc parseFieldValue*(node: JsonNode, fieldType: string): FieldValue =
     if elemType == "Int":
       result = FieldValue(kind: fkIntArray)
       for item in node:
-        result.intArr.add(item.getInt)
+        result.intArr.add(requireInt(item, "Array<Int> element"))
     elif elemType == "Float":
       result = FieldValue(kind: fkFloatArray)
       for item in node:
-        result.floatArr.add(parseFloat(item))
+        result.floatArr.add(jsonToFloat(item))
     elif elemType == "Bool":
       result = FieldValue(kind: fkBoolArray)
       for item in node:
-        result.boolArr.add(item.getBool)
+        result.boolArr.add(requireBool(item, "Array<Bool> element"))
     elif elemType == "String" or elemType == "FilePath":
       result = FieldValue(kind: fkStringArray)
       for item in node:
-        result.strArr.add(item.getStr)
+        result.strArr.add(requireStr(item, "Array<String> element"))
     elif elemType == "Color":
       result = FieldValue(kind: fkColorArray)
       for item in node:
-        result.colorArr.add(item.getStr)
+        result.colorArr.add(requireStr(item, "Array<Color> element"))
     elif elemType == "Point":
       result = FieldValue(kind: fkPointArray)
       for item in node:
@@ -119,7 +136,7 @@ proc parseFieldValue*(node: JsonNode, fieldType: string): FieldValue =
         if item.kind == JNull:
           result.enumArr.add("")  # null enum element treated as empty string
         else:
-          result.enumArr.add(item.getStr)
+          result.enumArr.add(requireStr(item, "Array<Enum> element"))
     else:
       raise newException(LdtkParseError, "unknown array element type: " & elemType)
     return
@@ -127,16 +144,16 @@ proc parseFieldValue*(node: JsonNode, fieldType: string): FieldValue =
   # Scalar types
   case fieldType
   of "Int":
-    result = FieldValue(kind: fkInt, intVal: node.getInt)
+    result = FieldValue(kind: fkInt, intVal: requireInt(node, "Int field"))
   of "Float":
-    result = FieldValue(kind: fkFloat, floatVal: parseFloat(node))
+    result = FieldValue(kind: fkFloat, floatVal: jsonToFloat(node))
   of "Bool":
-    result = FieldValue(kind: fkBool, boolVal: node.getBool)
+    result = FieldValue(kind: fkBool, boolVal: requireBool(node, "Bool field"))
   of "String", "FilePath":
     # FilePath is a string in the JSON value; no separate kind needed
-    result = FieldValue(kind: fkString, strVal: node.getStr)
+    result = FieldValue(kind: fkString, strVal: requireStr(node, "String field"))
   of "Color":
-    result = FieldValue(kind: fkColor, colorVal: node.getStr)
+    result = FieldValue(kind: fkColor, colorVal: requireStr(node, "Color field"))
   of "Point":
     result = FieldValue(kind: fkPoint, pointVal: parseGridPoint(node))
   of "Tile":
@@ -146,6 +163,6 @@ proc parseFieldValue*(node: JsonNode, fieldType: string): FieldValue =
   else:
     # LocalEnum.Foo or ExternEnum.Foo
     if fieldType.startsWith("LocalEnum.") or fieldType.startsWith("ExternEnum."):
-      result = FieldValue(kind: fkEnum, enumVal: node.getStr)
+      result = FieldValue(kind: fkEnum, enumVal: requireStr(node, "Enum field"))
     else:
       raise newException(LdtkParseError, "unknown field type: " & fieldType)

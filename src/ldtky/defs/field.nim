@@ -4,6 +4,7 @@ import std/strutils
 import ldtky/enums
 import ldtky/json_helpers
 import ldtky/errors
+import ldtky/parse_utils
 
 type
   FieldDef* = object
@@ -41,23 +42,10 @@ type
     exportToToc*: Option[bool]
     searchable*: Option[bool]
 
-proc requireDoubleUnderscoreStr(node: JsonNode, key: string): string =
-  if not node.hasKey(key):
-    raise newException(LdtkParseError, "missing required field: " & key)
-  let v = node[key]
-  if v.kind != JString:
-    raise newException(LdtkParseError, "field " & key & ": expected string, got " & $v.kind)
-  v.getStr
-
-proc parseEnumField[T: enum](s, ctx: string): T =
-  try: parseEnum[T](s)
-  except ValueError:
-    raise newException(LdtkParseError, ctx & ": unknown enum value: " & s)
-
 proc parseFieldDef*(node: JsonNode): FieldDef =
   result.identifier          = getField[string](node, "identifier")
   result.uid                 = getField[int](node, "uid")
-  result.fieldDefType        = requireDoubleUnderscoreStr(node, "__type")
+  result.fieldDefType        = requireStr(node, "__type")
   result.internalType        = getField[string](node, "type")
   result.isArray             = getField[bool](node, "isArray")
   result.canBeNull           = getField[bool](node, "canBeNull")

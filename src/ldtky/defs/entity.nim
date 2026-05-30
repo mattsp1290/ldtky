@@ -6,6 +6,7 @@ import ldtky/primitives
 import ldtky/defs/field
 import ldtky/json_helpers
 import ldtky/errors
+import ldtky/parse_utils
 
 type
   EntityDef* = object
@@ -33,20 +34,6 @@ type
     tileId*, tilesetId*: Option[int]
     maxHeight*, minHeight*, maxWidth*, minWidth*: Option[int]
     doc*: Option[string]
-
-proc parseEnumField[T: enum](s, ctx: string): T =
-  try: parseEnum[T](s)
-  except ValueError:
-    raise newException(LdtkParseError, ctx & ": unknown enum value: " & s)
-
-proc parseTilesetRect(node: JsonNode): TilesetRect =
-  if node.kind != JObject:
-    raise newException(LdtkParseError, "TilesetRect: expected object, got " & $node.kind)
-  result.h          = getField[int](node, "h")
-  result.w          = getField[int](node, "w")
-  result.x          = getField[int](node, "x")
-  result.y          = getField[int](node, "y")
-  result.tilesetUid = getField[int](node, "tilesetUid")
 
 proc parseEntityDef*(node: JsonNode): EntityDef =
   result.identifier    = getField[string](node, "identifier")

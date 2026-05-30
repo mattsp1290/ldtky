@@ -11,9 +11,9 @@ requires "nim >= 2.0.0"
 const sharedFlags = "--hints:off"  # --mm:orc comes from nim.cfg
 
 task test, "Run unit tests":
-  let testFiles: seq[string] = @[]
-  if testFiles.len == 0:
-    echo "warning: no test files registered yet"
+  let testFiles = @[
+    "tests/test_json_helpers.nim",
+  ]
   for f in testFiles:
     exec "nim c " & sharedFlags & " -r " & f
 
@@ -32,6 +32,7 @@ task checkModules, "Check library modules compile":
     "src/ldtky/defs/entity.nim",
     "src/ldtky/instances/field.nim",
     "src/ldtky/instances/toc.nim",
+    "src/ldtky/parse_utils.nim",
   ]
   for m in modules:
     exec "nim check " & sharedFlags & " " & m

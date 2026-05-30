@@ -1,4 +1,8 @@
 type
+  EntityReferenceInfos* = object
+    ## Cross-reference to an entity instance identified by IID strings.
+    entityIid*, layerIid*, levelIid*, worldIid*: string
+
   GridPoint* = object
     cx*, cy*: int  ## Cell coordinates (grid units, not pixels)
 

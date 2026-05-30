@@ -24,6 +24,7 @@ type
     worldX*, worldY*: Option[int] ## from __worldX, __worldY (opt)
 
 proc parseEntityInstance*(node: JsonNode): EntityInstance =
+  ## Parse an entity instance JSON object. All `__`-prefixed fields are handled.
   result.identifier  = getField[string](node, "__identifier")
   result.iid         = getField[string](node, "iid")
   result.defUid      = getField[int](node, "defUid")

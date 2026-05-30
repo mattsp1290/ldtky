@@ -63,6 +63,8 @@ proc parseLevelBgPosInfos(node: JsonNode): LevelBgPosInfos =
   result.topLeftPx = parseFloatSeqField(node, "topLeftPx")
 
 proc parseLevel*(node: JsonNode): Level =
+  ## Parse a level JSON object. Returns a `Level` ref.
+  ## `layerInstances` is `none` when the level has external layers (`externalLevels=true`).
   result = Level()
   result.identifier   = getField[string](node, "identifier")
   result.iid          = getField[string](node, "iid")

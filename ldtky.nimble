@@ -27,6 +27,8 @@ task checkModules, "Check library modules compile":
     "src/ldtky/instances/layer_utils.nim",
     "src/ldtky/defs/intgrid.nim",
     "src/ldtky/defs/enums.nim",
+    "src/ldtky/defs/tileset.nim",
+    "src/ldtky/defs/field.nim",
   ]
   for m in modules:
     exec "nim check " & sharedFlags & " " & m

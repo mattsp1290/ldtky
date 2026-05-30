@@ -1,0 +1,26 @@
+# Package
+version       = "0.1.0"
+author        = "Matt Spurlin"
+description   = "Nim library for loading and parsing LDtk project files"
+license       = "MIT"
+srcDir        = "src"
+skipDirs      = @["tests", "examples", "docs"]
+
+requires "nim >= 2.0.0"
+
+const sharedFlags = "--hints:off"  # --mm:orc comes from nim.cfg
+
+task test, "Run unit tests":
+  let testFiles: seq[string] = @[]
+  if testFiles.len == 0:
+    echo "warning: no test files registered yet"
+  for f in testFiles:
+    exec "nim c " & sharedFlags & " -r " & f
+
+task checkModules, "Check library modules compile":
+  let modules = @[
+    "src/ldtky/errors.nim",
+    "src/ldtky/enums.nim",
+  ]
+  for m in modules:
+    exec "nim check " & sharedFlags & " " & m

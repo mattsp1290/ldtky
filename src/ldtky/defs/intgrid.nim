@@ -20,7 +20,7 @@ type
 
 proc parseIntGridValueDef*(node: JsonNode): IntGridValueDef =
   result.color      = getField[string](node, "color")
-  result.groupUid   = getField[int](node, "groupUid")
+  result.groupUid   = getOpt[int](node, "groupUid").get(0)  # absent in older LDtk versions
   result.value      = getField[int](node, "value")
   result.identifier = getOpt[string](node, "identifier")
 

@@ -50,12 +50,17 @@ proc parseNeighbourLevel(node: JsonNode): NeighbourLevel =
   result.levelIid = getField[string](node, "levelIid")
   result.levelUid = getOpt[int](node, "levelUid")
 
+proc parseFloatSeqField(node: JsonNode, key: string): seq[float] =
+  if not node.hasKey(key):
+    raise newException(LdtkParseError, "LevelBgPosInfos: missing field: " & key)
+  parseFloatSeq(node[key], "LevelBgPosInfos." & key)
+
 proc parseLevelBgPosInfos(node: JsonNode): LevelBgPosInfos =
   if node.kind != JObject:
     raise newException(LdtkParseError, "LevelBgPosInfos: expected object, got " & $node.kind)
-  result.cropRect  = parseFloatSeq(node["cropRect"], "LevelBgPosInfos.cropRect")
-  result.scale     = parseFloatSeq(node["scale"], "LevelBgPosInfos.scale")
-  result.topLeftPx = parseFloatSeq(node["topLeftPx"], "LevelBgPosInfos.topLeftPx")
+  result.cropRect  = parseFloatSeqField(node, "cropRect")
+  result.scale     = parseFloatSeqField(node, "scale")
+  result.topLeftPx = parseFloatSeqField(node, "topLeftPx")
 
 proc parseLevel*(node: JsonNode): Level =
   result = Level()

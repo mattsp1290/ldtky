@@ -2,7 +2,10 @@ import std/json
 import std/options
 import ldtky/errors
 
-proc getStr*(node: JsonNode, key: string): string =
+# Private typed helpers. Named to avoid colliding with std/json's same-signature
+# getStr/getInt/getFloat/getBool procs. Callers use getField[T] and getOpt[T].
+
+proc strField(node: JsonNode, key: string): string =
   if not node.hasKey(key):
     raise newException(LdtkParseError, "missing required field: " & key)
   let v = node[key]
@@ -10,7 +13,7 @@ proc getStr*(node: JsonNode, key: string): string =
     raise newException(LdtkParseError, "field " & key & ": expected string, got " & $v.kind)
   v.getStr
 
-proc getInt*(node: JsonNode, key: string): int =
+proc intField(node: JsonNode, key: string): int =
   if not node.hasKey(key):
     raise newException(LdtkParseError, "missing required field: " & key)
   let v = node[key]
@@ -18,17 +21,19 @@ proc getInt*(node: JsonNode, key: string): int =
     raise newException(LdtkParseError, "field " & key & ": expected int, got " & $v.kind)
   v.getInt
 
-proc getFloat*(node: JsonNode, key: string): float =
+proc floatField(node: JsonNode, key: string): float =
   if not node.hasKey(key):
     raise newException(LdtkParseError, "missing required field: " & key)
   let v = node[key]
+  # LDtk emits integer JSON values for float fields (e.g. Tile.a = 1, not 1.0).
+  # Accept JInt as well as JFloat. The reverse (JFloat for an int field) is not accepted.
   case v.kind
   of JFloat: v.getFloat
   of JInt:   v.getInt.float
   else:
     raise newException(LdtkParseError, "field " & key & ": expected float, got " & $v.kind)
 
-proc getBool*(node: JsonNode, key: string): bool =
+proc boolField(node: JsonNode, key: string): bool =
   if not node.hasKey(key):
     raise newException(LdtkParseError, "missing required field: " & key)
   let v = node[key]
@@ -36,7 +41,7 @@ proc getBool*(node: JsonNode, key: string): bool =
     raise newException(LdtkParseError, "field " & key & ": expected bool, got " & $v.kind)
   v.getBool
 
-proc getOptStr*(node: JsonNode, key: string): Option[string] =
+proc optStrField(node: JsonNode, key: string): Option[string] =
   if not node.hasKey(key): return none(string)
   let v = node[key]
   if v.kind == JNull: return none(string)
@@ -44,7 +49,7 @@ proc getOptStr*(node: JsonNode, key: string): Option[string] =
     raise newException(LdtkParseError, "field " & key & ": expected string or null, got " & $v.kind)
   some(v.getStr)
 
-proc getOptInt*(node: JsonNode, key: string): Option[int] =
+proc optIntField(node: JsonNode, key: string): Option[int] =
   if not node.hasKey(key): return none(int)
   let v = node[key]
   if v.kind == JNull: return none(int)
@@ -52,7 +57,7 @@ proc getOptInt*(node: JsonNode, key: string): Option[int] =
     raise newException(LdtkParseError, "field " & key & ": expected int or null, got " & $v.kind)
   some(v.getInt)
 
-proc getOptFloat*(node: JsonNode, key: string): Option[float] =
+proc optFloatField(node: JsonNode, key: string): Option[float] =
   if not node.hasKey(key): return none(float)
   let v = node[key]
   if v.kind == JNull: return none(float)
@@ -62,7 +67,7 @@ proc getOptFloat*(node: JsonNode, key: string): Option[float] =
   else:
     raise newException(LdtkParseError, "field " & key & ": expected float or null, got " & $v.kind)
 
-proc getOptBool*(node: JsonNode, key: string): Option[bool] =
+proc optBoolField(node: JsonNode, key: string): Option[bool] =
   if not node.hasKey(key): return none(bool)
   let v = node[key]
   if v.kind == JNull: return none(bool)
@@ -71,17 +76,19 @@ proc getOptBool*(node: JsonNode, key: string): Option[bool] =
   some(v.getBool)
 
 proc getField*[T](node: JsonNode, key: string): T =
-  ## Generic required field extractor. Raises LdtkParseError on missing or wrong type.
-  when T is string:  getStr(node, key)
-  elif T is int:     getInt(node, key)
-  elif T is float:   getFloat(node, key)
-  elif T is bool:    getBool(node, key)
+  ## Extract a required field from a JsonNode, raising LdtkParseError on
+  ## missing or wrong-type. Supports string, int, float, bool.
+  when T is string:  strField(node, key)
+  elif T is int:     intField(node, key)
+  elif T is float:   floatField(node, key)
+  elif T is bool:    boolField(node, key)
   else: {.error: "getField[T]: unsupported type " & $T.}
 
 proc getOpt*[T](node: JsonNode, key: string): Option[T] =
-  ## Generic optional field extractor. Returns none(T) for missing or null.
-  when T is string:  getOptStr(node, key)
-  elif T is int:     getOptInt(node, key)
-  elif T is float:   getOptFloat(node, key)
-  elif T is bool:    getOptBool(node, key)
+  ## Extract an optional field from a JsonNode. Returns none(T) for missing or
+  ## null values. Raises LdtkParseError if the key is present but has the wrong type.
+  when T is string:  optStrField(node, key)
+  elif T is int:     optIntField(node, key)
+  elif T is float:   optFloatField(node, key)
+  elif T is bool:    optBoolField(node, key)
   else: {.error: "getOpt[T]: unsupported type " & $T.}

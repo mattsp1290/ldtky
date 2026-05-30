@@ -150,9 +150,10 @@ proc parseLayerDef*(node: JsonNode): LayerDef =
   result.parallaxFactorX  = getField[float](node, "parallaxFactorX")
   result.parallaxFactorY  = getField[float](node, "parallaxFactorY")
   result.parallaxScaling  = getField[bool](node, "parallaxScaling")
-  result.renderInWorldView = getField[bool](node, "renderInWorldView")
-  result.canSelectWhenInactive = getField[bool](node, "canSelectWhenInactive")
-  result.hideFieldsWhenInactive = getField[bool](node, "hideFieldsWhenInactive")
+  # These fields were added in LDtk v1.2+ — default false for older files
+  result.renderInWorldView      = getOpt[bool](node, "renderInWorldView").get(false)
+  result.canSelectWhenInactive  = getOpt[bool](node, "canSelectWhenInactive").get(false)
+  result.hideFieldsWhenInactive = getOpt[bool](node, "hideFieldsWhenInactive").get(false)
   result.hideInList      = getField[bool](node, "hideInList")
   result.tilePivotX      = getField[float](node, "tilePivotX")
   result.tilePivotY      = getField[float](node, "tilePivotY")
@@ -161,8 +162,7 @@ proc parseLayerDef*(node: JsonNode): LayerDef =
   result.autoTilesetDefUid     = getOpt[int](node, "autoTilesetDefUid")
   result.uiColor         = getOpt[string](node, "uiColor")
   result.doc             = getOpt[string](node, "doc")
-  for arrKey in ["autoRuleGroups", "intGridValues", "intGridValuesGroups",
-                 "excludedTags", "requiredTags"]:
+  for arrKey in ["autoRuleGroups", "intGridValues", "excludedTags", "requiredTags"]:
     if not node.hasKey(arrKey):
       raise newException(LdtkParseError, "LayerDef: missing required field: " & arrKey)
   if node["autoRuleGroups"].kind == JArray:
@@ -171,7 +171,8 @@ proc parseLayerDef*(node: JsonNode): LayerDef =
   if node["intGridValues"].kind == JArray:
     for v in node["intGridValues"]:
       result.intGridValues.add(parseIntGridValueDef(v))
-  if node["intGridValuesGroups"].kind == JArray:
+  # intGridValuesGroups added in LDtk v1.4.x — absent in older files
+  if node.hasKey("intGridValuesGroups") and node["intGridValuesGroups"].kind == JArray:
     for v in node["intGridValuesGroups"]:
       result.intGridValuesGroups.add(parseIntGridValueGroupDef(v))
   for tag in node["excludedTags"]:

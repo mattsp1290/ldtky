@@ -34,7 +34,8 @@ proc parseTile(node: JsonNode): Tile =
     raise newException(LdtkParseError, "Tile: expected object, got " & $node.kind)
   result.f = getField[int](node, "f")
   result.t = getField[int](node, "t")
-  result.a = getField[float](node, "a")
+  # `a` (alpha) was added in LDtk v1.3.x — default 1.0 for older files
+  result.a = getOpt[float](node, "a").get(1.0)
   if node.hasKey("px") and node["px"].kind == JArray:
     for v in node["px"]:
       result.px.add(v.getInt)
